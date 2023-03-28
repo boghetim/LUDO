@@ -73,10 +73,10 @@ void Ludo::game(const QList<QByteArray>& messages)
 
 void Ludo::help()
 {
-    QString info = "Welcome in the Game: LUDO.\n"
-                   "  How to play:  "
-                   "  to roll the dice give 'ludo>player>green' command for the color your picked "
-                   "  To quit to the game enter 'ludo>exit' "   ;
+    QString info = "\n   Welcome in the Game: LUDO.\n"
+                   "   How to play:  \n"
+                   "   to roll the dice give 'ludo>player>roll?>' command to get your dice roll. \n"
+                   "   To quit to the game enter 'ludo>exit' \n";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
