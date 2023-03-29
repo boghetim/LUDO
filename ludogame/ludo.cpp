@@ -13,7 +13,6 @@ Ludo::Ludo(QCoreApplication *a)
 {
     srand(time(0));
 
-
     try
     {
         nzmqt::ZMQContext *context = nzmqt::createDefaultContext( a );
@@ -31,7 +30,9 @@ Ludo::Ludo(QCoreApplication *a)
             std::cerr << "NOT CONNECTED !!!" << std::endl;
         }
 
-
+        count = 0;
+        for (int i = 0; i < 4; ++i)
+            players.append(0);
 
         context->start();
 
@@ -61,7 +62,7 @@ void Ludo::game(const QList<QByteArray>& messages)
             }
             if (msg.contains("ludo?>player>roll"))
             {
-               rolDice();
+                rolDice();
             }
             if(msg.contains("ludo?>exit"))
             {
@@ -75,23 +76,34 @@ void Ludo::help()
 {
     QString info = "ludo!>help\n   Welcome in the Game: LUDO.\n"
                    "   How to play:  \n"
-                   "   to roll the dice give 'ludo?>player>roll?>' command to get your dice roll. \n"
+                   "   to pick your color give 'ludo?>player>pick' command. \n"
+                   "   to roll the dice give 'ludo?>player>roll>' command. \n"
                    "   To quit to the game enter 'ludo?>exit' \n";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
     std::cout << "  Welcome in the Game: LUDO "  <<std::endl;
     std::cout << "  How to play:  "  <<std::endl;
-    std::cout << "  to roll the dice give 'ludo>player>green' command for the color your picked "  <<std::endl;
+    std::cout << "  to roll the dice give 'ludo?>player>roll' command "  <<std::endl;
     std::cout << "  To quit to the game enter 'ludo>exit' " <<std::endl;
 }
 
 void Ludo::rolDice()
 {
-    QString diceRoller = "ludo!>player>roll " + QString::number(rand() % 6 + 1);
+    players[count]=players[count]+(rand() % 6 + 1);
+    QString diceRoller = "ludo!>player>"+ QString::number (count) +" total place" + QString::number (players[count]);
     std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
     pusher->sendMessage(message);
+
+    if (count<3)
+    {
+        count++;
+    }
+    else
+    {
+        count=0;
+    }
 
 }
 
