@@ -24,7 +24,7 @@ Ludo::Ludo(QCoreApplication *a)
 
         pusher->connectTo( "tcp://benternet.pxl-ea-ict.be:24041" );
         subscriber->connectTo( "tcp://benternet.pxl-ea-ict.be:24042" );
-        subscriber->subscribeTo("ludo>");
+        subscriber->subscribeTo("ludo?>");
 
         if( !pusher->isConnected() || !subscriber->isConnected() )
         {
@@ -55,15 +55,15 @@ void Ludo::game(const QList<QByteArray>& messages)
             QString msg = QString::fromUtf8(msgByteArray);
             std::cout << std::endl;
             std::cout << "Received: " << msg.toStdString() << std::endl;
-            if (msg.contains("ludo>help"))
+            if (msg.contains("ludo?>help"))
             {
                 help();
             }
-            if (msg.contains("ludo>player>roll?")) //VASTE 4 KLEUREN MEEGEVEN (DUS 4 IFS) waar ik makkelijk de varriable kan optellen van dice
+            if (msg.contains("ludo?>player>roll"))
             {
                rolDice();
             }
-            if(msg.contains("ludo>exit"))
+            if(msg.contains("ludo?>exit"))
             {
                 bye();
             }
@@ -73,10 +73,10 @@ void Ludo::game(const QList<QByteArray>& messages)
 
 void Ludo::help()
 {
-    QString info = "\n   Welcome in the Game: LUDO.\n"
+    QString info = "ludo!>help\n   Welcome in the Game: LUDO.\n"
                    "   How to play:  \n"
-                   "   to roll the dice give 'ludo>player>roll?>' command to get your dice roll. \n"
-                   "   To quit to the game enter 'ludo>exit' \n";
+                   "   to roll the dice give 'ludo?>player>roll?>' command to get your dice roll. \n"
+                   "   To quit to the game enter 'ludo?>exit' \n";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
@@ -88,7 +88,7 @@ void Ludo::help()
 
 void Ludo::rolDice()
 {
-    QString diceRoller = "ludo>player>roll!>" + QString::number(rand() % 6 + 1);
+    QString diceRoller = "ludo!>player>roll " + QString::number(rand() % 6 + 1);
     std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
     pusher->sendMessage(message);
@@ -97,7 +97,10 @@ void Ludo::rolDice()
 
 void Ludo::bye()
 {
+    QString goodbye = "ludo!>exiting";
     std::cout << "  Exiting " <<std::endl;
+    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( goodbye.toUtf8() );
+    pusher->sendMessage(message);
     Sleep(2000);
     exit(0);
 }
