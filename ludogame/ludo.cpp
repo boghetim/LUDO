@@ -34,6 +34,10 @@ Ludo::Ludo(QCoreApplication *a)
         for (int i = 0; i < 4; ++i)
             players.append(0);
 
+        players[1]=10;
+        players[2]=20;
+        players[3]=30;
+
         context->start();
 
     }
@@ -91,11 +95,24 @@ void Ludo::help()
 void Ludo::rolDice()
 {
     players[count]=players[count]+(rand() % 6 + 1);
-    QString diceRoller = "ludo!>player>"+ QString::number (count) +" total place" + QString::number (players[count]);
-    std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
-    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
-    pusher->sendMessage(message);
 
+ /* is around the field and pion is safe in base */
+    if (players[count]> count*10+40)
+    {
+        QString diceRoller = "ludo!>player>roll "+ QString::number (count) +" is finished";
+        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
+        pusher->sendMessage(message);
+        players[count]= count*10;
+    }
+    else
+    {
+        QString diceRoller = "ludo!>player>" + QString::number (count) +" total place " + QString::number (players[count]);
+        std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
+        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
+        pusher->sendMessage(message);
+    }
+
+/* selecting next player and reseting to the first one after last one is done */
     if (count<3)
     {
         count++;
