@@ -32,7 +32,11 @@ The first one to bring all four tokens in the home column wins.
 
 ## Diagram
 
+![diagram](./media/diagram.png?raw=true)
 
+![example commands help and start](./media/DiagramStartHelp.png?raw=true)
+
+![example game](./media/DiagramExample.png?raw=true)
 
 
 ## Commands 
