@@ -15,12 +15,14 @@ public:
     void help();
     void pickcolor();
     void rolDice();
+    void start();
     void bye();
 
 private:
     nzmqt::ZMQSocket *pusher;
     nzmqt::ZMQSocket *subscriber;
     int count;
+    int playerAmount;
     QList<int> players;
 };
 
