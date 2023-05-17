@@ -13,6 +13,10 @@ Ludo::Ludo(QCoreApplication *a)
 {
     srand(time(0));
 
+    for (int i = 0; i < 16; ++i)
+        allTokensPos.append(0);
+
+
     try
     {
         nzmqt::ZMQContext *context = nzmqt::createDefaultContext( a );
@@ -45,7 +49,7 @@ Ludo::Ludo(QCoreApplication *a)
     {
         std::cerr << "Caught an exception : " << ex.what();
     }
-    std::cout << "Start!" << std::endl;
+    std::cout << "Server online" << std::endl;
 }
 
 void Ludo::game(const QList<QByteArray>& messages)
@@ -64,10 +68,26 @@ void Ludo::game(const QList<QByteArray>& messages)
             {
                 help();
             }
+            if (msg.contains("ludo?>setplayer"))
+            {
+                setplayer();
+                QList<QString> messageSplit = msg.split('>');
+                if(messageSplit.size()>2)
+                {
+                playerAmount= messageSplit[2].toInt();
+                std::cout << "amount is " << playerAmount << std::endl;
+                }
+                else
+                {
+                    QString error = "not enough to '>' to find amount ";
+                    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
+                    pusher->sendMessage(message);
+                    std::cout << "not enough to '>' to find amount " << std::endl;
+                }
+            }
             if (msg.contains("ludo?>start"))
             {
                 start();
-                playerAmount=2;
             }
             if (msg.contains("ludo?>player>roll"))
             {
@@ -77,6 +97,10 @@ void Ludo::game(const QList<QByteArray>& messages)
             {
                 bye();
             }
+            if (msg.contains("ludo?>overview"))
+            {
+                overview();
+            }
         }
     }
 }
@@ -85,14 +109,13 @@ void Ludo::help()
 {
     QString info = "ludo!>help\n   Welcome in the Game: LUDO.\n"
                    "   How to play:  \n"
-                   "   to start to give give'ludo?>start' command. \n"
-                   "   then u need to give with how moany players you wane play 2-4 with 'ludo?>start>3' command. (example 3 players) \n"
+                   "   First use the command 's' followed with a number for the amount of players like 's3' for example \n"
                    "   1st player is Green, 2nd is Blue, 3th is Red and the 4th player is Yellow those colors are fixed \n"
-                   "   to roll the dice give 'ludo?>player>roll>1st token' command. \n"
-                   "   if you wane roll the other tokens just replace '1st' with '2nd' , '3rd' or '4th'\n"
-                   "   if you roll a 6 and want to free an extra token give 'ludo?>player>free token' command. \n"
-                   "   if you wane see the board overview give 'ludo?>overview Board' command. \n"
-                   "   To rage quit to the game enter 'ludo?>exit' \n";
+                   "   To roll use the command 'r' \n"
+                   "   To change the token use the command 't' followed with a number of the token 't3' for example\n"
+                   "   if you roll a 6 you can roll again with 'r' or free a extra token by 'f' \n"
+                   "   if you wane see the board overview give 'o' command. \n"
+                   "   To rage quit to the game enter 'b' \n";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
@@ -105,25 +128,17 @@ void Ludo::help()
 
 void Ludo::start()
 {
+    if (playerAmount ==2 || playerAmount ==3 || playerAmount ==4 )
+        {
+            QString countplayers = "ludo!>start>\n  Welcome in the Game: LUDO.\n"
+                           "  You are playing with "+ QString::number (playerAmount) +  "\n"
+                           "  Enjoy the game ! \n";
+            nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
+            pusher->sendMessage(message);
 
-    if (playerAmount ==0)
-    {
-        QString countplayers = "ludo!>start>how many players are playing?";
-        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
-        pusher->sendMessage(message);
+            std::cout << "  test start menu "  <<std::endl;
+        }
 
-        std::cout << "  test start menu "  <<std::endl;
-    }
-    else
-    {
-        QString color = "ludo!>start\n  Welcome in the Game: LUDO.\n"
-                       "  You are playing with "+ QString::number (playerAmount) +  "\n"
-                       "  Enjoy the game ! \n";
-        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( color.toUtf8() );
-        pusher->sendMessage(message);
-
-        std::cout << "  test start2 menu "  <<std::endl;
-    }
 }
 
 void Ludo::bye()
@@ -139,50 +154,115 @@ void Ludo::bye()
     exit(0);
 }
 
+void Ludo::setplayer()
+{
+    if (playerAmount ==2 || playerAmount ==3 || playerAmount ==4 )
+    {
+        QString countplayers = "ludo!>setplayer>\n  somthing went wrong with the amount of players please try again\n";
+        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
+        pusher->sendMessage(message);
+
+        std::cout << "  test setplayer2 menu "  <<std::endl;
+    }
+    else
+    {
+        QString countplayers = "ludo!>setplayer>something wrong please try again (must be 2-4)";
+        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
+        pusher->sendMessage(message);
+
+        std::cout << "  test setplayer menu "  <<std::endl;
+    }
+}
+
+void Ludo::field()
+{
+    gameArea=
+    {
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'},
+       {'|', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '|'}
+    };
+}
+
+void Ludo::overview()
+{
+    QString tokensPos;
+    for(int i=0; i>16; i++)
+    {
+      tokensPos.append(QChar(allTokensPos[i]) + ',');
+    }
+    QString overview = "ludo!>overview>location of al tokens>" + tokensPos;
+    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( overview.toUtf8() );
+    pusher->sendMessage(message);
+
+    std::cout << "  test setplayer2 menu "  <<std::endl;
+}
+
 void Ludo::rolDice()
 {
-    int temp = (rand() % 6 + 1);
-    QString activeplayer= "";
-    players[count]=players[count]+temp;
-
-    if (count==0)
-        activeplayer = "Green";
-    if (count==1)
-        activeplayer = "Blue";
-    if (count==2)
-        activeplayer = "Red";
-    if (count==3)
-        activeplayer = "Yellow";
-
- /* is around the field and pion is safe in base */
-    if (players[count]> count*10+40)
+    if (playerAmount ==0)
     {
-        QString diceRoller = "ludo!>player>roll "+ activeplayer +" is finished";
-        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
+        QString countplayers = "ludo!>player>to go the set players menu first ";
+        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
         pusher->sendMessage(message);
-        players[count]= count*10;
-
-        std::cout << "  test roll done menu "  <<std::endl;
     }
     else
     {
-        QString diceRoller = "ludo!>player>" + activeplayer +" rolled " + QString::number (temp)+", total place " + QString::number (players[count]);
-        std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
-        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
-        pusher->sendMessage(message);
+        int temp = (rand() % 6 + 1);
+        QString activeplayer= "";
+        allTokensPos[count]=allTokensPos[count]+temp;
+        if (count==0)
+            activeplayer = "Green";
+        if (count==1)
+            activeplayer = "Blue";
+        if (count==2)
+            activeplayer = "Red";
+        if (count==3)
+            activeplayer = "Yellow";
 
-        std::cout << "  test roll menu "  <<std::endl;
-    }
+        /* is around the field and pion is safe in base */
+        if (players[count]> count*10+40)
+        {
+            QString diceRoller = "ludo!>player>roll "+ activeplayer +" is finished";
+            nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
+            pusher->sendMessage(message);
+            players[count]= count*10;
 
-/* selecting next player and reseting to the first one after last one is done */
-    if (count<=playerAmount)
-    {
-        if (temp!=6)
-        count++;
-    }
-    else
-    {
-        count=0;
-    }
+            std::cout << "  test roll done menu "  <<std::endl;
+        }
+        else
+        {
+            QString diceRoller = "ludo!>player>" + activeplayer +" rolled " + QString::number (temp)+", total place " + QString::number (allTokensPos[count]);
+            std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
+            nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
+            pusher->sendMessage(message);
 
+            std::cout << "  test roll menu "  <<std::endl;
+        }
+
+    /* selecting next player and reseting to the first one after last one is done */
+        if (count<playerAmount-1)
+        {
+            if (temp!=6)
+            count++;
+        }
+        else
+        {
+            count=0;
+        }
+    }
 }
