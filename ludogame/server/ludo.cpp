@@ -13,12 +13,7 @@ Ludo::Ludo(QCoreApplication *a)
 {
     srand(time(0));
 
-    for (int i = 0; i < 16; ++i)
-        allTokensPos.append(0);
 
-          allTokensPos[1]=10;
-          allTokensPos[2]=20;
-          allTokensPos[3]=30;
 
 
     try
@@ -38,14 +33,12 @@ Ludo::Ludo(QCoreApplication *a)
             std::cerr << "NOT CONNECTED !!!" << std::endl;
         }
 
-        count = 0;
         for (int i = 0; i < 4; ++i)
             players.append(0);
 
         players[1]=10;
         players[2]=20;
         players[3]=30;
-        playerAmount=0;
         context->start();
 
     }
@@ -68,18 +61,49 @@ void Ludo::game(const QList<QByteArray>& messages)
             QString msg = QString::fromUtf8(msgByteArray);
             std::cout << std::endl;
             std::cout << "Received: " << msg.toStdString() << std::endl;
+
+
+
+            if (msg.contains("ludo?>startGame>"))
+            {
+                /*QList<QString> messageSplit = msg.split('>');
+                if(messageSplit.size()>2)
+                {
+                gamenumber= messageSplit[2].toInt();
+                }*/
+
+                int newGameNumber = allTokensPos.size();
+                allTokensPos.append(QList<int>());
+                for (int i = 0; i < 16; ++i)
+                    allTokensPos[newGameNumber].append(0);
+                allTokensPos[newGameNumber][1]=10;
+                allTokensPos[newGameNumber][2]=20;
+                allTokensPos[newGameNumber][3]=30;
+
+                for (int i = 0; i < 4; ++i)
+                    players.append(0);
+
+                players[1]=10;
+                players[2]=20;
+                players[3]=30;
+
+                QString start = "ludo!>start>game number is:"+ QString::number(newGameNumber)+ "please do not forget this";
+                nzmqt::ZMQMessage message = nzmqt::ZMQMessage( start.toUtf8() );
+                pusher->sendMessage(message);
+            }
+
             if (msg.contains("ludo?>help"))
             {
                 help();
             }
             if (msg.contains("ludo?>setplayer"))
             {
-                setplayer();
+                setplayer(gamenumber);
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>2)
+                if(messageSplit.size()>3)
                 {
-                playerAmount= messageSplit[2].toInt();
-                std::cout << "amount is " << playerAmount << std::endl;
+                playerAmount[gamenumber]= messageSplit[2].toInt();
+                std::cout << "amount is " << playerAmount[gamenumber] << std::endl;
                 }
                 else
                 {
@@ -91,7 +115,7 @@ void Ludo::game(const QList<QByteArray>& messages)
             }
             if (msg.contains("ludo?>player>roll"))
             {
-                rolDice();
+                rolDice(gamenumber);
             }
             if(msg.contains("ludo?>exit"))
             {
@@ -99,7 +123,7 @@ void Ludo::game(const QList<QByteArray>& messages)
             }
             if (msg.contains("ludo?>overview"))
             {
-                overview();
+                overview(gamenumber);
             }
         }
     }
@@ -120,17 +144,12 @@ void Ludo::help()
     pusher->sendMessage(message);
 
     std::cout << "  test help menu "  <<std::endl;
-   // std::cout << "  Welcome in the Game: LUDO "  <<std::endl;
-    //std::cout << "  How to play:  "  <<std::endl;
-    //std::cout << "  to roll the dice give 'ludo?>player>roll' command "  <<std::endl;
-    //std::cout << "  To quit to the game enter 'ludo>exit' " <<std::endl;
 }
 
 
 void Ludo::bye()
 {
     QString goodbye = "ludo!>exiting";
-    //std::cout << "  Exiting " <<std::endl;
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( goodbye.toUtf8() );
     pusher->sendMessage(message);
 
@@ -140,11 +159,11 @@ void Ludo::bye()
     exit(0);
 }
 
-void Ludo::setplayer()
+void Ludo::setplayer(int gamenumber)
 {
-    if (playerAmount ==2 || playerAmount ==3 || playerAmount ==4 )
+    if (playerAmount[gamenumber] ==2 || playerAmount[gamenumber] ==3 || playerAmount[gamenumber] ==4 )
     {
-        QString countplayers = "ludo!>setplayer>are set on:"+ QString::number (playerAmount) +" players";
+        QString countplayers = "ludo!>setplayer>are set on:"+ QString::number (playerAmount[gamenumber]) +" players";
         nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
         pusher->sendMessage(message);
 
@@ -162,12 +181,12 @@ void Ludo::setplayer()
 
 
 
-void Ludo::overview()
+void Ludo::overview(int gamenumber)
 {
     QString tokensPos;
     for(int i=0; i<16; i++)
     {
-      tokensPos.append(QString::number(allTokensPos[i]) + ',');
+      tokensPos.append(QString::number(allTokensPos[i][gamenumber]) + ',');
     }
     QString overview = QString("ludo!>overview>location of al tokens>" + tokensPos);
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( overview.toUtf8() );
@@ -176,9 +195,9 @@ void Ludo::overview()
     std::cout << "  test overview menu "  <<std::endl;
 }
 
-void Ludo::rolDice()
+void Ludo::rolDice(int gamenumber)
 {
-    if (playerAmount ==0)
+    if (playerAmount[gamenumber] ==0)
     {
         QString countplayers = "ludo!>player>to go the set players menu first ";
         nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
@@ -188,29 +207,29 @@ void Ludo::rolDice()
     {
         int temp = (rand() % 6 + 1);
         QString activeplayer= "";
-        allTokensPos[count]=allTokensPos[count]+temp;
-        if (count==0)
+        allTokensPos[count[gamenumber]][gamenumber]=allTokensPos[count[gamenumber]][gamenumber]+temp;
+        if (count[gamenumber]==0)
             activeplayer = "Green";
-        if (count==1)
+        if (count[gamenumber]==1)
             activeplayer = "Blue";
-        if (count==2)
+        if (count[gamenumber]==2)
             activeplayer = "Red";
-        if (count==3)
+        if (count[gamenumber]==3)
             activeplayer = "Yellow";
 
         /* is around the field and pion is safe in base */
-        if (allTokensPos[count]> count*10+40)
+        if (allTokensPos[count[gamenumber]][gamenumber]> count[gamenumber]*10+40)
         {
             QString diceRoller = "ludo!>player>roll "+ activeplayer +" is finished";
             nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
             pusher->sendMessage(message);
-            players[count]= count*10;
+            players[count[gamenumber]]= count[gamenumber]*10;
 
             std::cout << "  test roll done menu "  <<std::endl;
         }
         else
         {
-            QString diceRoller = "ludo!>player>" + activeplayer +" rolled " + QString::number (temp)+", total place " + QString::number (allTokensPos[count]);
+            QString diceRoller = "ludo!>player>" + activeplayer +" rolled " + QString::number (temp)+", total place " + QString::number (allTokensPos[count[gamenumber]][gamenumber]);
             std::cout << "Rolled: " <<  diceRoller.toStdString() <<std::endl;
             nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
             pusher->sendMessage(message);
@@ -219,12 +238,12 @@ void Ludo::rolDice()
         }
 
     /* selecting next player and reseting to the first one after last one is done */
-        if (count<playerAmount-1)
+        if (count[gamenumber]<playerAmount[gamenumber]-1)
         {
             if (temp!=6)
-            count++;
+            count[gamenumber]++;
         }
         else
-            count=0;
+            count[gamenumber]=0;
     }
 }

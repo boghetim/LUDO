@@ -14,21 +14,21 @@ public:
     Ludo(QCoreApplication *a);
     void game(const QList<QByteArray>& messages);
     void help();
-    void rolDice();
+    void rolDice(int gamenumber);
     void bye();
-    void setplayer();
-    void overview();
+    void setplayer(int gamenumber);
+    void overview(int gamenumber);
     QChar findCharacter(const QString& str);
 
 
 private:
     nzmqt::ZMQSocket *pusher;
     nzmqt::ZMQSocket *subscriber;
-    int count;
-    QList<int> allTokensPos;
-    int playerAmount;
+    QList<int> count;
+    int gamenumber=0;
+    QList<QList<int>> allTokensPos;
+    QList<int> playerAmount;
     QList<int> players;
-
 };
 
 #endif // LUDO_H

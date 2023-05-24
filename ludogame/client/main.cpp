@@ -45,18 +45,25 @@ int main( int argc, char *argv[] )
                 QString input = s.readLine();
                 if (input.size()==0)
                      std::cout << "No command found" << std::endl;
-                if (input.at(0)=='r')
+                if (input.at(0)=='s')
+                {
+                    input = "ludo?>startGame";
+                    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
+                    pusher->sendMessage( message );
+                    std::cout << "Message send !" << std::endl;
+                }
+                if (input.at(1)=='r')
                 {
                     input = "ludo?>player>roll";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(0)=='s')
+                else if (input.at(1)=='a')
                 {
-                    if (input.size()>=2  && (input.at(1)=='2' || input.at(1)=='3' || input.at(1)=='4'))
+                    if (input.size()>=3  && (input.at(2)=='2' || input.at(2)=='3' || input.at(2)=='4'))
                     {
-                    input = "ludo?>setplayer>"+ QString(input.at(1));
+                    input = "ludo?>setplayer>"+ QString(input.at(2));
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
@@ -64,21 +71,21 @@ int main( int argc, char *argv[] )
                     else
                        std::cout << "Amount of players need to be 2-4!" << std::endl;
                 }
-                else if (input.at(0)=='h')
+                else if (input.at(1)=='h')
                 {
                     QString input = "ludo?>help";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(0)=='o')
+                else if (input.at(1)=='o')
                 {
                     QString input = "ludo?>overview";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(0)=='b')
+                else if (input.at(1)=='b')
                 {
                     QString input = "ludo?>exit";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
@@ -102,12 +109,7 @@ int main( int argc, char *argv[] )
 		}
 		else
 		{
-            subscriber->subscribeTo( "ludo!>player" );
-            subscriber->subscribeTo( "ludo!>exit" );
-            subscriber->subscribeTo( "ludo!>help" );
-            subscriber->subscribeTo( "ludo!>setplayer" );
-            subscriber->subscribeTo( "ludo!>overview" );
-
+            subscriber->subscribeTo( "ludo!>" );
 		}
 
 		if( !pusher->isConnected() || !subscriber->isConnected() )
