@@ -14,12 +14,9 @@ public:
     Ludo(QCoreApplication *a);
     void game(const QList<QByteArray>& messages);
     void help();
-    void pickcolor();
     void rolDice();
-    void start();
     void bye();
     void setplayer();
-    void field(void);
     void overview();
     QChar findCharacter(const QString& str);
 
@@ -31,7 +28,7 @@ private:
     QList<int> allTokensPos;
     int playerAmount;
     QList<int> players;
-    QList<QList<char>>gameArea;
+
 };
 
 #endif // LUDO_H
