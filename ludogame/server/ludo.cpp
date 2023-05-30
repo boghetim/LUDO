@@ -96,25 +96,22 @@ void Ludo::game(const QList<QByteArray>& messages)
                 }
                 else
                 {
-                    QString error = "not enough to '>' to find amount ";
+                    QString error = "message send set players error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
-                    std::cout << "not enough to '>' to find amount " << std::endl;
                 }
             }
             if (msg.contains("ludo?>player>roll"))
             {
                 QList<QString> messageSplit = msg.split('>');
                 if(messageSplit.size()>3)
-                {
-                rolDice(messageSplit[3].toInt());
-                }
+                    rolDice(messageSplit[3].toInt());
+
                 else
                 {
-                    QString error = "not enough to '>' ";
+                    QString error = "message send roll error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
-                    std::cout << "not enough to '>' " << std::endl;
                 }
 
             }
@@ -124,8 +121,16 @@ void Ludo::game(const QList<QByteArray>& messages)
             }
             if (msg.contains("ludo?>overview"))
             {
-                if (gamenumber<playerAmount.size())
-                overview(gamenumber);
+                QList<QString> messageSplit = msg.split('>');
+                if(messageSplit.size()>2)
+                    overview(messageSplit[2].toInt());
+                else
+                {
+                    QString error = "message send overview error: messageSplit ";
+                    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
+                    pusher->sendMessage(message);
+                }
+
             }
         }
     }
@@ -134,14 +139,16 @@ void Ludo::game(const QList<QByteArray>& messages)
 void Ludo::help()
 {
     QString info = "ludo!>help\n   Welcome in the Game: LUDO.\n"
+                   "   Please check out https://r.mtdv.me/articles/LudoGame for some hacks and tips for the game \n\n"
                    "   How to play:  \n"
-                   "   First use the command 's' followed with a number for the amount of players like 's3' for example \n"
+                   "   First use the command 'g' to get your unique gametag, add it to every command! \n"
+                   "   enter command 's' followed with a number of your gametag and then for the amount of players like 's03' for example \n"
                    "   1st player is Green, 2nd is Blue, 3th is Red and the 4th player is Yellow those colors are fixed \n"
-                   "   To roll use the command 'r' \n"
-                   "   To change the token use the command 't' followed with a number of the token 't3' for example\n"
-                   "   if you roll a 6 you can roll again with 'r' or free a extra token by 'f' \n"
-                   "   if you wane see the board overview give 'o' command. \n"
-                   "   To rage quit to the game enter 'b' \n";
+                   "   To roll use the command 'r' followed with your unique gametag like 'r0' for example\n"
+                   "   if you roll a 6 you will roll again with 'r' with agin followed with your gametag \n"
+                   "   if you wane see the board overview give 'o' command and yes you need to get your gametag after the command. \n"
+                   "   To rage quit for every game enter command 'b' to close the server, PLEASE do NOT do it  \n"
+                   "   PS: do not forget the put your gametag after your commands... Thank you \n";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
