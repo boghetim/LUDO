@@ -38,54 +38,58 @@ int main( int argc, char *argv[] )
 			}
 		} );
 
-        QThread *thread = QThread::create([pusher]{
+            QThread *thread = QThread::create([pusher]{
             QTextStream s(stdin);
             while( 1 )
             {
                 QString input = s.readLine();
                 if (input.size()==0)
                      std::cout << "No command found" << std::endl;
-                if (input.at(0)=='g')
+
+                else if (input.at(0)=='g')
                 {
-                    input = "ludo?>startGame"+ QString(input.at(2));
+                    input = "ludo?>startGame>";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                if (input.at(1)=='r')
+
+                else if (input.at(0)=='r')
                 {
-                    input = "ludo?>player>roll";
+                    input = "ludo?>player>roll>"+ QString(input.at(1));
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(1)=='s')
+
+                else if (input.at(0)=='s')
                 {
                     if (input.size()>=3  && (input.at(2)=='2' || input.at(2)=='3' || input.at(2)=='4'))
                     {
-                    input = "ludo?>setplayer>"+ QString(input.at(2));
+                    input = "ludo?>setplayer>"+ QString(input.at(1))+">"+ QString(input.at(2));
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                     }
+
                     else
                        std::cout << "Amount of players need to be 2-4!" << std::endl;
                 }
-                else if (input.at(1)=='h')
+                else if (input.at(0)=='h')
                 {
                     QString input = "ludo?>help";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(1)=='o')
+                else if (input.at(0)=='o')
                 {
                     QString input = "ludo?>overview";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(1)=='b')
+                else if (input.at(0)=='b')
                 {
                     QString input = "ludo?>exit";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
