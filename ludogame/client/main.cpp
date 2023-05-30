@@ -15,7 +15,6 @@ int main( int argc, char *argv[] )
 		nzmqt::ZMQContext *context = nzmqt::createDefaultContext( &a );
 		nzmqt::ZMQSocket *pusher = context->createSocket( nzmqt::ZMQSocket::TYP_PUSH, context );
 		nzmqt::ZMQSocket *subscriber = context->createSocket( nzmqt::ZMQSocket::TYP_SUB, context );
-		//QObject::connect( subscriber, &nzmqt::ZMQSocket::messageReceived, printMessages );
 		QObject::connect( subscriber, &nzmqt::ZMQSocket::messageReceived, []( const QList<QByteArray>& messages )
 		{
 			if( messages.size() < 1 )
@@ -40,6 +39,17 @@ int main( int argc, char *argv[] )
 
             QThread *thread = QThread::create([pusher]{
             QTextStream s(stdin);
+
+            /*
+             *  Reading the user input and checking if its a command or not
+             g -> starGame menu where the client get the info what gametag there are
+             r and gametag number as second user input -> roll dice menu where the dice will roll and get your place of your token
+             s, gametag number as second user input and number of players as third user input -> will set the amount of players playing
+             h -> help menu where al the commands are listed
+             o and gametag number as second user input -> overview of all tokens
+             b -> server shutdown ,please dont do it if ure not the admin ;)
+
+             */
             while( 1 )
             {
                 QString input = s.readLine();
@@ -54,12 +64,19 @@ int main( int argc, char *argv[] )
                     std::cout << "Message send !" << std::endl;
                 }
 
+
+
                 else if (input.at(0)=='r')
                 {
-                    input = "ludo?>player>roll>"+ QString(input.at(1));
-                    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
-                    pusher->sendMessage( message );
-                    std::cout << "Message send !" << std::endl;
+                    if(input.size()>=2)
+                    {
+                        input = "ludo?>player>roll>"+ QString(input.at(1));
+                        nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
+                        pusher->sendMessage( message );
+                        std::cout << "Message send !" << std::endl;
+                    }
+                    else
+                        std::cout << "Please do give your gametag number with the command" << std::endl;
                 }
 
                 else if (input.at(0)=='s')
@@ -73,7 +90,7 @@ int main( int argc, char *argv[] )
                     }
 
                     else
-                       std::cout << "Amount of players need to be 2-4!" << std::endl;
+                       std::cout << "check if you give your gametag number as second input and player amount as third (only 2 till 4 is possible)" << std::endl;
                 }
                 else if (input.at(0)=='h')
                 {

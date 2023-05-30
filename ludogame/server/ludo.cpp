@@ -12,10 +12,6 @@
 Ludo::Ludo(QCoreApplication *a)
 {
     srand(time(0));
-
-
-
-
     try
     {
         nzmqt::ZMQContext *context = nzmqt::createDefaultContext( a );
@@ -43,6 +39,15 @@ Ludo::Ludo(QCoreApplication *a)
     std::cout << "Server online" << std::endl;
 }
 
+/*
+    game function:
+    Here we check what the user commands are and navigate to the correct function.
+    For startGame command we set the gametag number to the next available one.
+    and set al the values of the tokens, playeramount and count.
+    The gametag is needed for most function and will check of the user input here to for it.
+    If gametag is not correct a error message will be send to the client.
+
+*/
 void Ludo::game(const QList<QByteArray>& messages)
 {
     if( messages.size() < 1 )
@@ -55,8 +60,6 @@ void Ludo::game(const QList<QByteArray>& messages)
             QString msg = QString::fromUtf8(msgByteArray);
             std::cout << std::endl;
             std::cout << "Received: " << msg.toStdString() << std::endl;
-
-
 
             if (msg.contains("ludo?>startGame>"))
             {
@@ -81,7 +84,6 @@ void Ludo::game(const QList<QByteArray>& messages)
                 nzmqt::ZMQMessage message = nzmqt::ZMQMessage( start.toUtf8() );
                 pusher->sendMessage(message);
             }
-
             if (msg.contains("ludo?>help"))
             {
                 help();
@@ -89,14 +91,14 @@ void Ludo::game(const QList<QByteArray>& messages)
             if (msg.contains("ludo?>setplayer"))
             {
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>3)
+                if(messageSplit.size()>3 && messageSplit[2].toInt()< allTokensPos.size())
                 {
                 playerAmount[messageSplit[2].toInt()]= messageSplit[3].toInt();
                 std::cout << "amount is " << playerAmount[messageSplit[2].toInt()] << std::endl;
                 }
                 else
                 {
-                    QString error = "message send set players error: messageSplit ";
+                    QString error = "ludo!>message send set players error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
                 }
@@ -104,12 +106,11 @@ void Ludo::game(const QList<QByteArray>& messages)
             if (msg.contains("ludo?>player>roll"))
             {
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>3)
+                if(messageSplit.size()>3 && messageSplit[3].toInt()< allTokensPos.size())
                     rolDice(messageSplit[3].toInt());
-
                 else
                 {
-                    QString error = "message send roll error: messageSplit ";
+                    QString error = "ludo!>message send roll error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
                 }
@@ -122,11 +123,11 @@ void Ludo::game(const QList<QByteArray>& messages)
             if (msg.contains("ludo?>overview"))
             {
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>2)
+                if(messageSplit.size()>2 && messageSplit[2].toInt()< allTokensPos.size())
                     overview(messageSplit[2].toInt());
                 else
                 {
-                    QString error = "message send overview error: messageSplit ";
+                    QString error = "ludo!>message send overview error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
                 }
@@ -136,6 +137,11 @@ void Ludo::game(const QList<QByteArray>& messages)
     }
 }
 
+/*
+    help function:
+    Here all commands are send to the client.
+    Also a little print in the server to get a clear picture what functions are used in the proces of the game.
+*/
 void Ludo::help()
 {
     QString info = "ludo!>help\n   Welcome in the Game: LUDO.\n"
@@ -152,22 +158,31 @@ void Ludo::help()
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( info.toUtf8() );
     pusher->sendMessage(message);
 
-    std::cout << "  test help menu "  <<std::endl;
+    std::cout << "Help menu "  <<std::endl;
 }
 
-
+/*
+    bye function:
+    Here the server will be terminated after a message to the client and server and 2 sec sleep to see the message.
+    Why ? Dont know i like to choas of this.
+*/
 void Ludo::bye()
 {
     QString goodbye = "ludo!>exiting";
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( goodbye.toUtf8() );
     pusher->sendMessage(message);
 
-    std::cout << "  test bye menu "  <<std::endl;
+    std::cout << "Bye menu "  <<std::endl;
 
     Sleep(2000);
     exit(0);
 }
 
+/*
+    setplayer function:
+    Here we going to check if the user input is 2 till 4 players.
+    Also a little print in the server to get a clear picture what functions are used in the proces of the game.
+*/
 void Ludo::setplayer(int gamenumber)
 {
     if (playerAmount[gamenumber] ==2 || playerAmount[gamenumber] ==3 || playerAmount[gamenumber] ==4 )
@@ -176,7 +191,7 @@ void Ludo::setplayer(int gamenumber)
         nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
         pusher->sendMessage(message);
 
-        std::cout << "  test setplayer2 menu "  <<std::endl;
+        std::cout << "Setplayer menu "  <<std::endl;
     }
     else
     {
@@ -184,10 +199,15 @@ void Ludo::setplayer(int gamenumber)
         nzmqt::ZMQMessage message = nzmqt::ZMQMessage( countplayers.toUtf8() );
         pusher->sendMessage(message);
 
-        std::cout << "  test setplayer menu "  <<std::endl;
+        std::cout << "Setplayer error menu "  <<std::endl;
     }
 }
 
+/*
+    overview function:
+    Here we going to send the location of all the tokens to the client of the selected game in a simple for loop.
+    Also a little print in the server to get a clear picture what functions are used in the proces of the game.
+ * */
 void Ludo::overview(int gamenumber)
 {
     QString tokensPos;
@@ -199,9 +219,16 @@ void Ludo::overview(int gamenumber)
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( overview.toUtf8() );
     pusher->sendMessage(message);
 
-    std::cout << "  test overview menu "  <<std::endl;
+    std::cout << "Overview menu "  <<std::endl;
 }
 
+/*
+    rolDice function:
+    Here an radom number is generated from 1 till 6.
+    This number is given to the token in play and next token is selected (if the number is not 6)
+    If a token is back in hes homebase the client will get a message that that color won.
+    Also a little print in the server to get a clear picture what functions are used in the proces of the game.
+*/
 void Ludo::rolDice(int gamenumber)
 {
     if (playerAmount[gamenumber] ==0)
@@ -225,17 +252,16 @@ void Ludo::rolDice(int gamenumber)
             activeplayer = "Yellow";
 
         /* is around the field and pion is safe in base */
-
         if (allTokensPos[gamenumber][count[gamenumber]]> count[gamenumber]*10+40)
         {
             QString diceRoller = "ludo!>player>roll "+ activeplayer +" is finished";
             nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
             pusher->sendMessage(message);
-            players[count[gamenumber]]= count[gamenumber]*10;
-
-            std::cout << "  test roll done menu "  <<std::endl;
+            allTokensPos[gamenumber][count[gamenumber]]=count[gamenumber]*10;
+            std::cout << "Roll finished menu "  <<std::endl;
         }
 
+        /* give rolled value and total place of active color to client*/
         else
         {
             QString diceRoller = "ludo!>player>" + activeplayer +" rolled " + QString::number (temp)+", total place " + QString::number (allTokensPos[gamenumber][count[gamenumber]]);
@@ -243,10 +269,10 @@ void Ludo::rolDice(int gamenumber)
             nzmqt::ZMQMessage message = nzmqt::ZMQMessage( diceRoller.toUtf8() );
             pusher->sendMessage(message);
 
-            std::cout << "  test roll menu "  <<std::endl;
+            std::cout << "Roll menu "  <<std::endl;
         }
 
-    /* selecting next player and reseting to the first one after last one is done */
+        /* selecting next player and reseting to the first one after last one is done (if rolled value is not 6) */
         if (count[gamenumber]<playerAmount[gamenumber]-1)
         {
             if (temp!=6)

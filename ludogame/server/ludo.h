@@ -18,7 +18,6 @@ public:
     void bye();
     void setplayer(int gamenumber);
     void overview(int gamenumber);
-    QChar findCharacter(const QString& str);
 
 
 private:
@@ -28,7 +27,6 @@ private:
     int gamenumber=0;
     QList<QList<int>> allTokensPos;
     QList<int> playerAmount;
-    QList<int> players;
 };
 
 #endif // LUDO_H
