@@ -45,9 +45,9 @@ int main( int argc, char *argv[] )
                 QString input = s.readLine();
                 if (input.size()==0)
                      std::cout << "No command found" << std::endl;
-                if (input.at(0)=='s')
+                if (input.at(0)=='g')
                 {
-                    input = "ludo?>startGame";
+                    input = "ludo?>startGame"+ QString(input.at(2));
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
@@ -59,7 +59,7 @@ int main( int argc, char *argv[] )
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
-                else if (input.at(1)=='a')
+                else if (input.at(1)=='s')
                 {
                     if (input.size()>=3  && (input.at(2)=='2' || input.at(2)=='3' || input.at(2)=='4'))
                     {
