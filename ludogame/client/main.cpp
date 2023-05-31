@@ -101,14 +101,14 @@ int main( int argc, char *argv[] )
                 }
                 else if (input.at(0)=='o')
                 {
-                    QString input = "ludo?>overview";
+                    input = "ludo?>overview>"+QString(input.at(1));
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;
                 }
                 else if (input.at(0)=='b')
                 {
-                    QString input = "ludo?>exit";
+                    input = "ludo?>exit";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( input.toUtf8() );
                     pusher->sendMessage( message );
                     std::cout << "Message send !" << std::endl;

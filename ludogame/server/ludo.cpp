@@ -123,7 +123,7 @@ void Ludo::game(const QList<QByteArray>& messages)
             if (msg.contains("ludo?>overview"))
             {
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>2 && messageSplit[2].toInt()< allTokensPos.size())
+                if(messageSplit.size()>=3 && messageSplit[2].toInt()< allTokensPos.size())
                     overview(messageSplit[2].toInt());
                 else
                 {
@@ -213,7 +213,7 @@ void Ludo::overview(int gamenumber)
     QString tokensPos;
     for(int i=0; i<16; i++)
     {
-      tokensPos.append(QString::number(allTokensPos[i][gamenumber]) + ',');
+      tokensPos.append(QString::number(allTokensPos[gamenumber][i]) + ',');
     }
     QString overview = QString("ludo!>overview>location of al tokens>" + tokensPos);
     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( overview.toUtf8() );
