@@ -25,8 +25,11 @@ private:
     nzmqt::ZMQSocket *subscriber;
     QList<int> count;
     int gamenumber=0;
+    bool goBig=false;
     QList<QList<int>> allTokensPos;
     QList<int> playerAmount;
+    QList<QList<QString>> names;
+
 };
 
 #endif // LUDO_H

@@ -77,6 +77,15 @@ void Ludo::game(const QList<QByteArray>& messages)
                 allTokensPos[newGameNumber][2]=20;
                 allTokensPos[newGameNumber][3]=30;
 
+
+                names.append(QList<QString>());
+                for (int i = 0; i < 4; ++i)
+                    names[newGameNumber].append(0);
+                names[newGameNumber][0]="unknown";
+                names[newGameNumber][1]="unknown";
+                names[newGameNumber][2]="unknown";
+                names[newGameNumber][3]="unknown";
+
                 playerAmount.append(0);
                 count.append(0);
 
@@ -91,10 +100,18 @@ void Ludo::game(const QList<QByteArray>& messages)
             if (msg.contains("ludo?>setplayer"))
             {
                 QList<QString> messageSplit = msg.split('>');
-                if(messageSplit.size()>3 && messageSplit[2].toInt()< allTokensPos.size())
+                if(messageSplit.size()>5 && messageSplit[2].toInt()< allTokensPos.size())
                 {
                 playerAmount[messageSplit[2].toInt()]= messageSplit[3].toInt();
                 std::cout << "amount is " << playerAmount[messageSplit[2].toInt()] << std::endl;
+
+                names[messageSplit[2].toInt()][0]= messageSplit[4];
+                names[messageSplit[2].toInt()][1]= messageSplit[5];
+                if (messageSplit.size()> 6)
+                    names[messageSplit[2].toInt()][2]= messageSplit[6];
+                if (messageSplit.size()> 7)
+                    names[messageSplit[2].toInt()][2]= messageSplit[7];
+
                 }
                 else
                 {
@@ -111,6 +128,22 @@ void Ludo::game(const QList<QByteArray>& messages)
                 else
                 {
                     QString error = "ludo!>message send roll error: messageSplit ";
+                    nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
+                    pusher->sendMessage(message);
+                }
+
+            }
+            if (msg.contains("ludo?>player>goBig>"))   //command: ludo?>player>goBig>"gametag"
+            {
+                QList<QString> messageSplit = msg.split('>');
+                if(messageSplit.size()>3 && messageSplit[3].toInt()< allTokensPos.size())
+                {
+                    goBig = true,
+                    rolDice(messageSplit[3].toInt());
+                }
+                else
+                {
+                    QString error = "ludo!>message send goBig error: messageSplit ";
                     nzmqt::ZMQMessage message = nzmqt::ZMQMessage( error.toUtf8() );
                     pusher->sendMessage(message);
                 }
@@ -240,16 +273,30 @@ void Ludo::rolDice(int gamenumber)
     else
     {
         int temp = (rand() % 6 + 1);
+        int posNeg = (rand() % 2 + 1);
+
         QString activeplayer= "";
+
+        if (goBig == true)
+        {
+            if (posNeg == 1)
+                temp= temp*2;
+            else if (posNeg ==2)
+                temp = temp*(-1);
+            else
+                 std::cout << "error: goBig roll change "  <<std::endl;
+            goBig = false;
+        }
+
         allTokensPos[gamenumber][count[gamenumber]]=allTokensPos[gamenumber][count[gamenumber]]+temp;
         if (count[gamenumber]==0)
-            activeplayer = "Green";
+            activeplayer = names[gamenumber][0];
         if (count[gamenumber]==1)
-            activeplayer = "Blue";
+            activeplayer = names[gamenumber][1];
         if (count[gamenumber]==2)
-            activeplayer = "Red";
+            activeplayer =names[gamenumber][2];
         if (count[gamenumber]==3)
-            activeplayer = "Yellow";
+            activeplayer = names[gamenumber][3];
 
         /* is around the field and pion is safe in base */
         if (allTokensPos[gamenumber][count[gamenumber]]> count[gamenumber]*10+40)
@@ -275,12 +322,12 @@ void Ludo::rolDice(int gamenumber)
         /* selecting next player and reseting to the first one after last one is done (if rolled value is not 6) */
         if (count[gamenumber]<playerAmount[gamenumber]-1)
         {
-            if (temp!=6)
+            if ((temp!=6 || 12 )&& goBig !=true)
             count[gamenumber]++;
         }
         else
         {
-            if (temp!=6)
+            if ((temp!=6 || 12 ) && goBig !=true)
             count[gamenumber]=0;
         }
     }
